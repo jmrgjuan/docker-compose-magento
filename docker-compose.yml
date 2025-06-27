@@ -1,0 +1,98 @@
+name: magento247ce
+
+services:
+  app:
+    image: markoshust/magento-nginx:1.18-0
+    ports:
+      - "80:8000"
+      - "443:8443"
+    volumes: &appvolumes
+      - appdata:/var/www/html
+    depends_on:
+      - phpfpm
+
+  phpfpm:
+    image: markoshust/magento-php:8.2-fpm-0
+    volumes:
+      - appdata:/var/www/html
+      - ./env:/var/www/env
+    env_file: env/phpfpm.env
+    depends_on:
+      - db
+      - redis
+      - opensearch
+
+  db:
+    image: mariadb:10.6
+    command:
+      - --max_allowed_packet=64M
+      - --optimizer_use_condition_selectivity=1
+      - --optimizer_switch=rowid_filter=off
+      - --log_bin_trust_function_creators=1
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    env_file: env/db.env
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  #opensearch:  ARREGLAR
+  #  image: opensearchproject/opensearch:2.12.0
+  #  ports:
+  #    - "9200:9200"
+  #    - "9300:9300"
+  #  environment:
+  #    - discovery.type=single-node
+  #    - cluster.routing.allocation.disk.threshold_enabled=false
+  #    #- index.blocks.read_only_allow_delete=true # ❌ No pongas esto
+  #  env_file: env/opensearch.env
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - plugins.security.ssl.http.enabled=false
+      - plugins.security.disabled=false
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      #- cluster.routing.allocation.disk.threshold_enabled=false
+      #- index.blocks.read_only_allow_delete=true
+      #- OPENSEARCH_INITIAL_ADMIN_PASSWORD=... <- env file
+    env_file: env/opensearch.env
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - opensearch-net
+
+  rabbitmq:
+    image: markoshust/magento-rabbitmq:4.1-0
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    env_file: env/rabbitmq.env
+
+networks:
+  opensearch-net:
+
+volumes:
+  appdata:
+  opensearch-data:
+  dbdata:
+  rabbitmqdata:
