@@ -40,17 +40,6 @@ services:
     ports:
       - "6379:6379"
 
-  #opensearch:  ARREGLAR
-  #  image: opensearchproject/opensearch:2.12.0
-  #  ports:
-  #    - "9200:9200"
-  #    - "9300:9300"
-  #  environment:
-  #    - discovery.type=single-node
-  #    - cluster.routing.allocation.disk.threshold_enabled=false
-  #    #- index.blocks.read_only_allow_delete=true # ❌ No pongas esto
-  #  env_file: env/opensearch.env
-
   opensearch:
     image: opensearchproject/opensearch:2.12.0
     ports:
@@ -62,7 +51,7 @@ services:
       - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
       #- plugins.security.disabled=false
       #- cluster.routing.allocation.disk.threshold_enabled=false
-      #- index.blocks.read_only_allow_delete=true
+      #- index.blocks.read_only_allow_delete=true # ❌ No pongas esto
       #- OPENSEARCH_INITIAL_ADMIN_PASSWORD=... <- env file
     env_file: env/opensearch.env
     ulimits:
@@ -76,8 +65,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - opensearch-net
 
   rabbitmq:
     image: markoshust/magento-rabbitmq:4.1-0
@@ -87,9 +74,6 @@ services:
     volumes:
       - rabbitmqdata:/var/lib/rabbitmq
     env_file: env/rabbitmq.env
-
-networks:
-  opensearch-net:
 
 volumes:
   appdata:
