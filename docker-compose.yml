@@ -59,8 +59,8 @@ services:
     environment:
       - discovery.type=single-node
       - plugins.security.ssl.http.enabled=false
-      - plugins.security.disabled=false
       - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      #- plugins.security.disabled=false
       #- cluster.routing.allocation.disk.threshold_enabled=false
       #- index.blocks.read_only_allow_delete=true
       #- OPENSEARCH_INITIAL_ADMIN_PASSWORD=... <- env file
